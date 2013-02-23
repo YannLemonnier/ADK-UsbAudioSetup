@@ -4,7 +4,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
@@ -16,20 +19,20 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 	protected static final String TAG = null;
-//	private static final String ACTION_USB_PERMISSION =
-//		    "com.elskayann.usbaudiosetup.USB_PERMISSION";
+	private static final String ACTION_USB_PERMISSION =
+		    "com.android.example.USB_PERMISSION";
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-//		UsbManager mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);		
-//		PendingIntent mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
 		
-//		IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
-//		registerReceiver(mUsbReceiver, filter);
-//		
-//		Spinner spinner = (Spinner) findViewById(R.id.usb_list_spinner);
-//		spinner.setOnItemSelectedListener(this);
+		// Setup Filter for USB Permission
+		IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
+		registerReceiver(new mUsbReceiver(), filter);
+		
+		// Setup dynamic spinner for list of USB device to connect to
+		Spinner spinner = (Spinner) findViewById(R.id.usb_list_spinner);
+		spinner.setOnItemSelectedListener( new SpinnerActivity());
 	}
 
 	@Override
@@ -39,13 +42,53 @@ public class MainActivity extends Activity {
 		return true;
 	}
 
-    /** Called when the user clicks the Connect button */
+    /** Called when the user clicks on the Connect button */
     public void ConnectUsb(View view) {
-    	
-    	
+    	Spinner UsbListSpinner = (Spinner) findViewById(R.id.usb_list_spinner);
+    	String VendorName = "Dummy";
+    	String ProductName = "Dummy";
+    	TextView textView = (TextView) findViewById(R.id.usb_list_view);
+    	String UsbList = (String) textView.getText();
+        // Retrieve the UsbManager service with its message
+        UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        PendingIntent mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
+
+        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+        Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
+        while(deviceIterator.hasNext()){
+            UsbDevice device = deviceIterator.next();
+            String SelectedText = String.valueOf(UsbListSpinner.getSelectedItem());
+            int Vid = device.getVendorId();
+            
+            
+            switch (Vid) {
+            case 2372:
+            	VendorName = "KORG, Inc.";
+            	ProductName = "nanoKONTROL studio controller";
+            	break;	
+            case 2235:
+            	VendorName = "Texas Instruments Japan";
+            	ProductName = "PCM2900 Audio Codec";
+            	break;
+            default:
+				// do nothing.
+				break;	
+            }
+            
+            String IteratorText = VendorName+"\t"+ProductName;
+//            UsbList=UsbList.concat("\n Selected:" + SelectedText);
+//            UsbList=UsbList.concat("\n Device:" + IteratorText);
+            if(SelectedText.equalsIgnoreCase(IteratorText)){
+            	manager.requestPermission(device, mPermissionIntent);
+//    	Toast.makeText(view.getContext(), 
+//    			"OnItemSelectedListener : " + String.valueOf(device.getDeviceName()),
+//    			Toast.LENGTH_SHORT).show();
+            }
+        }
+        textView.setText(UsbList);
     }
 	
-    /** Called when the user clicks the Discover button */
+    /** Called when the user clicks on the Discover button */
     public void DiscoverUsb(View view) {
     	// Initiate variables
     	String UsbList = "Detailed Device List:\n";
@@ -78,6 +121,7 @@ public class MainActivity extends Activity {
             
             int Vid = device.getVendorId();
             
+            test();
             
             switch (Vid) {
             case 2372:
@@ -108,39 +152,11 @@ public class MainActivity extends Activity {
         
     }
 
-//    public class SpinnerActivity extends Activity implements OnItemSelectedListener {
-//        
-//        
-//        public void onItemSelected(AdapterView<?> parent, View view, 
-//                int pos, long id) {
-//            // An item was selected. You can retrieve the selected item using
-//            // parent.getItemAtPosition(pos)
-//        }
-//
-//        public void onNothingSelected(AdapterView<?> parent) {
-//            // Another interface callback
-//        }
-//    }
+public void test ()
+{
 	
-//    private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
+}
+	
 
-//        public void onReceive(Context context, Intent intent) {
-//            String action = intent.getAction();
-//            if (ACTION_USB_PERMISSION.equals(action)) {
-//                synchronized (this) {
-//                    UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-//
-//                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-//                        if(device != null){
-//                          //call method to set up device communication
-//                       }
-//                    } 
-//                    else {
-//                        Log.d(TAG, "permission denied for device " + device);
-//                    }
-//                }
-//            }
-//        }
-//    };
 }
 
